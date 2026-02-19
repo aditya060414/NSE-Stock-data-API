@@ -36,7 +36,9 @@ This project is built for **learning, practice, and portfolio purposes**.
 
 ## 📁 Project Structure
 
+
 project-root/
+
 │
 ├── server.js # Backend server
 ├── package.json
