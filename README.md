@@ -1,4 +1,4 @@
-# 📈 Indian Stock Market Charting App (NSE)
+# 📈 Indian Stock Market API (NSE)
 
 A full-stack stock market application that fetches **NSE historical stock data**, stores it in **MongoDB**, and visualizes it using **TradingView Lightweight Charts** (Line & Candlestick charts).
 
