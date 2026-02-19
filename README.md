@@ -56,7 +56,7 @@ project-root/
 
 ### 1️⃣ Clone Repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/aditya060414/NSE-Stock-data-API.git
 cd your-project
 
 2️⃣ Install Backend Dependencies
