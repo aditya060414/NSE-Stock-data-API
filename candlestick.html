@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Candlestick Chart</title>
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+        }
+
+        header {
+            background: #1e222d;
+            color: white;
+            padding: 12px;
+        }
+
+        .controls {
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        #chart {
+            height: 500px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>Candlestick Chart</header>
+
+    <div class="controls">
+        <input id="symbol" value="RELIANCE">
+        <button onclick="loadData()">Load</button>
+        <button onclick="setRange(30)">1M</button>
+        <button onclick="setRange(180)">6M</button>
+        <button onclick="setRange(365)">1Y</button>
+        <button onclick="setRange(0)">ALL</button>
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+        const chart = LightweightCharts.createChart(
+            document.getElementById("chart"),
+            { width: window.innerWidth, height: 500 }
+        );
+
+        const candleSeries = chart.addCandlestickSeries();
+        let fullData = [];
+
+        async function loadData() {
+            const symbol = document.getElementById("symbol").value.toUpperCase();
+            const res = await fetch(`http://localhost:3001/stocks/history?symbol=${symbol}`);
+            const data = await res.json();
+
+            fullData = data.map(d => {
+                const dt = new Date(d.tradeDate);
+                return {
+                    time: { year: dt.getFullYear(), month: dt.getMonth() + 1, day: dt.getDate() },
+                    open: d.open,
+                    high: d.high,
+                    low: d.low,
+                    close: d.close
+                };
+            });
+
+            candleSeries.setData(fullData);
+            chart.timeScale().fitContent();
+        }
+
+        function setRange(days) {
+            if (!fullData.length) return;
+
+            if (days === 0) {
+                candleSeries.setData(fullData);
+                chart.timeScale().fitContent();
+                return;
+            }
+
+            const last = fullData[fullData.length - 1];
+            const lastDate = new Date(last.time.year, last.time.month - 1, last.time.day);
+            const cutoff = new Date(lastDate);
+            cutoff.setDate(cutoff.getDate() - days);
+
+            const filtered = fullData.filter(d =>
+                new Date(d.time.year, d.time.month - 1, d.time.day) >= cutoff
+            );
+
+            candleSeries.setData(filtered);
+            chart.priceScale("right").applyOptions({
+                autoScale: true,
+            });
+            chart.timeScale().fitContent();
+        }
+
+        loadData();
+    </script>
+
+</body>
+
+</html>
