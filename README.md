@@ -1,4 +1,4 @@
-# 📈 Indian Stock Market Charting App (NSE)
+# 📈 Indian Stock Market API (NSE)
 
 A full-stack stock market application that fetches **NSE historical stock data**, stores it in **MongoDB**, and visualizes it using **TradingView Lightweight Charts** (Line & Candlestick charts).
 
@@ -36,7 +36,9 @@ This project is built for **learning, practice, and portfolio purposes**.
 
 ## 📁 Project Structure
 
+
 project-root/
+
 │
 ├── server.js # Backend server
 ├── package.json
@@ -54,7 +56,7 @@ project-root/
 
 ### 1️⃣ Clone Repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/aditya060414/NSE-Stock-data-API.git
 cd your-project
 
 2️⃣ Install Backend Dependencies
