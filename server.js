@@ -5,43 +5,24 @@ const csv = require("csvtojson");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const Stock = require("./models/Stock");
+
 const app = express();
 app.use(cors());
-const MONGO_API = process.env.MONGO_API_URL;
-// ---------- MongoDB ----------
-async function main() {
+
+const MONGO_API = process.env.MONGO_URI;
+const PORT = 3001;
+
+/* =========================
+   MongoDB Connection
+========================= */
+async function connectDB() {
   await mongoose.connect(MONGO_API);
+  console.log("✅ MongoDB connected");
 }
-main()
-  .then(async () => {
-    console.log("mongoDB connected");
-    // ---------- BACKFILL LAST 365 DAYS ----------
-    console.log("⏳ Backfilling 12 months of NSE data...");
 
-    let loadedDays = 0;
-    let i = 1;
-
-    while (loadedDays < 260) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      i++;
-
-      try {
-        await fetchAndStoreForDate(d);
-        loadedDays++;
-        console.log(`✔ Loaded ${loadedDays}/260 → ${d.toDateString()}`);
-      } catch {
-        // Weekend / NSE holiday → skip
-      }
-    }
-
-    console.log("✅ 12 months NSE backfill completed");
-  })
-  .catch((err) => {
-    console.error(err);
-  });
-
-// ---------- Helpers ----------
+/* =========================
+   Helper Functions
+========================= */
 function isoDate(d) {
   return d.toISOString().slice(0, 10);
 }
@@ -54,15 +35,25 @@ function nseParts(d) {
   };
 }
 
-// ---------- Fetch & Store NSE Bhavcopy ----------
+/* =========================
+   Fetch & Store NSE Data
+========================= */
 async function fetchAndStoreForDate(date) {
-  const { dd, mm, yyyy } = nseParts(date);
   const tradeDate = isoDate(date);
 
+  // ✅ SKIP if already exists (IMPORTANT)
+  const exists = await Stock.exists({ tradeDate });
+  if (exists) {
+    console.log(`⏩ Skipping ${tradeDate} (already in DB)`);
+    return;
+  }
+
+  const { dd, mm, yyyy } = nseParts(date);
   const url = `https://archives.nseindia.com/products/content/sec_bhavdata_full_${dd}${mm}${yyyy}.csv`;
 
   const res = await axios.get(url, {
     headers: { "User-Agent": "Mozilla/5.0" },
+    timeout: 10000,
   });
 
   const json = await csv().fromString(res.data);
@@ -78,18 +69,52 @@ async function fetchAndStoreForDate(date) {
       tradeDate,
     }));
 
-  for (const s of stocks) {
-    await Stock.updateOne(
-      { symbol: s.symbol, tradeDate: s.tradeDate },
-      { $set: s },
-      { upsert: true },
-    );
-  }
+  if (!stocks.length) return;
 
-  //   console.log(`Stored ${stocks.length} stocks for ${tradeDate}`);
+  // 🚀 FAST BULK UPSERT
+  await Stock.bulkWrite(
+    stocks.map((s) => ({
+      updateOne: {
+        filter: { symbol: s.symbol, tradeDate: s.tradeDate },
+        update: { $set: s },
+        upsert: true,
+      },
+    }))
+  );
+
+  console.log(`✔ Stored ${stocks.length} stocks for ${tradeDate}`);
 }
 
-// ---------- APIs ----------
+/* =========================
+   Backfill (Runs ONLY ONCE)
+========================= */
+async function backfillLast12Months() {
+  console.log("⏳ Backfilling last 12 months (only missing days)...");
+
+  let loadedDays = 0;
+  let i = 1;
+
+  while (loadedDays < 260) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    i++;
+
+    try {
+      await fetchAndStoreForDate(d);
+      loadedDays++;
+    } catch (err) {
+      // Weekend / Holiday / NSE error
+    }
+  }
+
+  console.log("✅ Backfill completed");
+}
+
+/* =========================
+   APIs
+========================= */
+
+// Latest trading day
 app.get("/stocks", async (req, res) => {
   const latest = await Stock.findOne().sort({ tradeDate: -1 }).lean();
   if (!latest) return res.json([]);
@@ -98,14 +123,37 @@ app.get("/stocks", async (req, res) => {
   res.json(data);
 });
 
+// Full history of a stock
 app.get("/stocks/history", async (req, res) => {
   const { symbol } = req.query;
   if (!symbol) return res.status(400).json({ error: "symbol required" });
 
-  const data = await Stock.find({ symbol }).sort({ tradeDate: 1 }).lean();
+  const data = await Stock.find({ symbol })
+    .sort({ tradeDate: 1 })
+    .lean();
 
   res.json(data);
 });
 
-// ---------- Start ----------
-app.listen(3001, () => console.log("Server running at http://localhost:3001"));
+/* =========================
+   Start Server
+========================= */
+(async () => {
+  try {
+    await connectDB();
+
+    // 🔥 Backfill ONLY if DB is empty
+    const count = await Stock.estimatedDocumentCount();
+    if (count === 0) {
+      await backfillLast12Months();
+    } else {
+      console.log("✅ Data already exists, skipping backfill");
+    }
+
+    app.listen(PORT, () =>
+      console.log(`🚀 Server running at http://localhost:${PORT}`)
+    );
+  } catch (err) {
+    console.error("❌ Server failed to start:", err.message);
+  }
+})();

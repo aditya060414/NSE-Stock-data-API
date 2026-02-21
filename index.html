@@ -208,7 +208,9 @@ function render() {
   const end = start + perPage;
 
   viewStocks.slice(start, end).forEach(s => {
-    const up = s.changePercent >= 0;
+    const changePercent = (((s.close - s.open) / s.open) * 100).toFixed(2);
+    const up = changePercent >= 0;
+
     table.innerHTML += `
       <tr>
         <td>${s.symbol}</td>
@@ -217,7 +219,7 @@ function render() {
         <td>${s.low}</td>
         <td>${s.close}</td>
         <td class="${up ? "up" : "down"}">
-          ${s.changePercent}%
+          ${changePercent}%
         </td>
       </tr>
     `;
