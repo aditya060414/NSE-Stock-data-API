@@ -4,28 +4,42 @@ const axios = require("axios");
 const csv = require("csvtojson");
 const cors = require("cors");
 const mongoose = require("mongoose");
-
+const Stock = require("./models/Stock");
 const app = express();
 app.use(cors());
-
+const MONGO_API = process.env.MONGO_API_URL;
 // ---------- MongoDB ----------
-mongoose
-  .connect("mongodb://127.0.0.1:27017/nse_stocks")
-  .then(() => console.log("MongoDB connected"))
-  .catch(console.error);
+async function main() {
+  await mongoose.connect(MONGO_API);
+}
+main()
+  .then(async () => {
+    console.log("mongoDB connected");
+    // ---------- BACKFILL LAST 365 DAYS ----------
+    console.log("⏳ Backfilling 12 months of NSE data...");
 
-const StockSchema = new mongoose.Schema({
-  symbol: String,
-  open: Number,
-  high: Number,
-  low: Number,
-  close: Number,
-  tradeDate: String,
-});
+    let loadedDays = 0;
+    let i = 1;
 
-StockSchema.index({ symbol: 1, tradeDate: 1 }, { unique: true });
+    while (loadedDays < 260) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      i++;
 
-const Stock = mongoose.model("Stock", StockSchema);
+      try {
+        await fetchAndStoreForDate(d);
+        loadedDays++;
+        console.log(`✔ Loaded ${loadedDays}/260 → ${d.toDateString()}`);
+      } catch {
+        // Weekend / NSE holiday → skip
+      }
+    }
+
+    console.log("✅ 12 months NSE backfill completed");
+  })
+  .catch((err) => {
+    console.error(err);
+  });
 
 // ---------- Helpers ----------
 function isoDate(d) {
@@ -74,30 +88,6 @@ async function fetchAndStoreForDate(date) {
 
   //   console.log(`Stored ${stocks.length} stocks for ${tradeDate}`);
 }
-
-// ---------- BACKFILL LAST 365 DAYS ----------
-// (async () => {
-//   console.log("⏳ Backfilling 12 months of NSE data...");
-
-//   let loadedDays = 0;
-//   let i = 1;
-
-//   while (loadedDays < 260) {
-//     const d = new Date();
-//     d.setDate(d.getDate() - i);
-//     i++;
-
-//     try {
-//       await fetchAndStoreForDate(d);
-//       loadedDays++;
-//       console.log(`✔ Loaded ${loadedDays}/260 → ${d.toDateString()}`);
-//     } catch {
-//       // Weekend / NSE holiday → skip
-//     }
-//   }
-
-//   console.log("✅ 12 months NSE backfill completed");
-// })();
 
 // ---------- APIs ----------
 app.get("/stocks", async (req, res) => {
