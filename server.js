@@ -79,7 +79,7 @@ async function fetchAndStoreForDate(date) {
         update: { $set: s },
         upsert: true,
       },
-    }))
+    })),
   );
 
   console.log(`✔ Stored ${stocks.length} stocks for ${tradeDate}`);
@@ -94,7 +94,7 @@ async function backfillLast12Months() {
   let loadedDays = 0;
   let i = 1;
 
-  while (loadedDays < 260) {
+  while (loadedDays < 520) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     i++;
@@ -128,9 +128,7 @@ app.get("/stocks/history", async (req, res) => {
   const { symbol } = req.query;
   if (!symbol) return res.status(400).json({ error: "symbol required" });
 
-  const data = await Stock.find({ symbol })
-    .sort({ tradeDate: 1 })
-    .lean();
+  const data = await Stock.find({ symbol }).sort({ tradeDate: 1 }).lean();
 
   res.json(data);
 });
@@ -149,9 +147,14 @@ app.get("/stocks/history", async (req, res) => {
     } else {
       console.log("✅ Data already exists, skipping backfill");
     }
-
+    try {
+      console.log("Updating todays data if !exist");
+      await fetchAndStoreForDate(new Date());
+    } catch (err) {
+      console.error(err);
+    }
     app.listen(PORT, () =>
-      console.log(`🚀 Server running at http://localhost:${PORT}`)
+      console.log(`🚀 Server running at http://localhost:${PORT}`),
     );
   } catch (err) {
     console.error("❌ Server failed to start:", err.message);
