@@ -17,7 +17,7 @@ const PORT = 3001;
 ========================= */
 async function connectDB() {
   await mongoose.connect(MONGO_API);
-  console.log("✅ MongoDB connected");
+  console.log(" MongoDB connected");
 }
 
 /* =========================
@@ -41,10 +41,10 @@ function nseParts(d) {
 async function fetchAndStoreForDate(date) {
   const tradeDate = isoDate(date);
 
-  // ✅ SKIP if already exists (IMPORTANT)
+  //  SKIP if already exists (IMPORTANT)
   const exists = await Stock.exists({ tradeDate });
   if (exists) {
-    console.log(`⏩ Skipping ${tradeDate} (already in DB)`);
+    console.log(` Skipping ${tradeDate} (already in DB)`);
     return;
   }
 
@@ -71,7 +71,7 @@ async function fetchAndStoreForDate(date) {
 
   if (!stocks.length) return;
 
-  // 🚀 FAST BULK UPSERT
+  //  FAST BULK UPSERT
   await Stock.bulkWrite(
     stocks.map((s) => ({
       updateOne: {
@@ -82,15 +82,13 @@ async function fetchAndStoreForDate(date) {
     })),
   );
 
-  console.log(`✔ Stored ${stocks.length} stocks for ${tradeDate}`);
+  console.log(` Stored ${stocks.length} stocks for ${tradeDate}`);
 }
 
 /* =========================
    Backfill (Runs ONLY ONCE)
 ========================= */
-async function backfillLast12Months() {
-  console.log("⏳ Backfilling last 12 months (only missing days)...");
-
+async function backfillData() {
   let loadedDays = 0;
   let i = 1;
 
@@ -107,7 +105,7 @@ async function backfillLast12Months() {
     }
   }
 
-  console.log("✅ Backfill completed");
+  console.log(" Backfill completed");
 }
 
 /* =========================
@@ -140,23 +138,23 @@ app.get("/stocks/history", async (req, res) => {
   try {
     await connectDB();
 
-    // 🔥 Backfill ONLY if DB is empty
+    //  Backfill ONLY if DB is empty
     const count = await Stock.estimatedDocumentCount();
     if (count === 0) {
-      await backfillLast12Months();
+      await backfillData();
     } else {
-      console.log("✅ Data already exists, skipping backfill");
+      console.log(" Data already exists, skipping backfill");
     }
     try {
       console.log("Updating todays data if !exist");
       await fetchAndStoreForDate(new Date());
     } catch (err) {
-      console.error(err);
+      console.log("data already exist");
     }
     app.listen(PORT, () =>
-      console.log(`🚀 Server running at http://localhost:${PORT}`),
+      console.log(` Server running at http://localhost:${PORT}`),
     );
   } catch (err) {
-    console.error("❌ Server failed to start:", err.message);
+    console.error(" Server failed to start:", err.message);
   }
 })();
