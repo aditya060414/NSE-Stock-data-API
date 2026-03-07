@@ -4,25 +4,29 @@ const axios = require("axios");
 const csv = require("csvtojson");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const cron = require("node-cron");
+
 const Stock = require("./models/Stock");
 
 const app = express();
 app.use(cors());
 
-const MONGO_API = process.env.MONGO_URI;
+const MONGO_API = process.env.MONGODB_API;
 const PORT = 3001;
 
 /* =========================
    MongoDB Connection
 ========================= */
+
 async function connectDB() {
   await mongoose.connect(MONGO_API);
-  console.log(" MongoDB connected");
+  console.log("MongoDB connected");
 }
 
 /* =========================
    Helper Functions
 ========================= */
+
 function isoDate(d) {
   return d.toISOString().slice(0, 10);
 }
@@ -36,19 +40,21 @@ function nseParts(d) {
 }
 
 /* =========================
-   Fetch & Store NSE Data
+   Fetch NSE Bhavcopy
 ========================= */
+
 async function fetchAndStoreForDate(date) {
   const tradeDate = isoDate(date);
 
-  //  SKIP if already exists (IMPORTANT)
+  // Skip if already exists
   const exists = await Stock.exists({ tradeDate });
   if (exists) {
-    console.log(` Skipping ${tradeDate} (already in DB)`);
+    console.log(`Skipping ${tradeDate} (already exists)`);
     return;
   }
 
   const { dd, mm, yyyy } = nseParts(date);
+
   const url = `https://archives.nseindia.com/products/content/sec_bhavdata_full_${dd}${mm}${yyyy}.csv`;
 
   const res = await axios.get(url, {
@@ -71,7 +77,6 @@ async function fetchAndStoreForDate(date) {
 
   if (!stocks.length) return;
 
-  //  FAST BULK UPSERT
   await Stock.bulkWrite(
     stocks.map((s) => ({
       updateOne: {
@@ -79,54 +84,80 @@ async function fetchAndStoreForDate(date) {
         update: { $set: s },
         upsert: true,
       },
-    })),
+    }))
   );
 
-  console.log(` Stored ${stocks.length} stocks for ${tradeDate}`);
+  console.log(`Stored ${stocks.length} stocks for ${tradeDate}`);
 }
 
 /* =========================
-   Backfill (Runs ONLY ONCE)
+   Find Latest Stored Date
 ========================= */
-async function backfillData() {
-  let loadedDays = 0;
-  let i = 1;
 
-  while (loadedDays < 365) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    i++;
+async function getLatestTradeDate() {
+  const latest = await Stock.findOne().sort({ tradeDate: -1 }).lean();
+  return latest ? new Date(latest.tradeDate) : null;
+}
 
-    try {
-      await fetchAndStoreForDate(d);
-      loadedDays++;
-    } catch (err) {
-      // Weekend / Holiday / NSE error
-    }
+/* =========================
+   Sync Missing Bhavcopies
+========================= */
+
+async function updateMissingDays() {
+  console.log("Checking missing trading days...");
+
+  const latest = await getLatestTradeDate();
+
+  let startDate;
+
+  if (!latest) {
+    startDate = new Date();
+    startDate.setDate(startDate.getDate() - 365);
+  } else {
+    startDate = new Date(latest);
+    startDate.setDate(startDate.getDate() + 1);
   }
 
-  console.log(" Backfill completed");
+  const today = new Date();
+
+  while (startDate <= today) {
+    try {
+      await fetchAndStoreForDate(startDate);
+    } catch (err) {
+      // Weekend / Holiday / NSE not uploaded yet
+    }
+
+    startDate.setDate(startDate.getDate() + 1);
+  }
+
+  console.log("Database synced with NSE");
 }
 
 /* =========================
    APIs
 ========================= */
 
-// Latest trading day
+// Latest trading day stocks
 app.get("/stocks", async (req, res) => {
   const latest = await Stock.findOne().sort({ tradeDate: -1 }).lean();
+
   if (!latest) return res.json([]);
 
   const data = await Stock.find({ tradeDate: latest.tradeDate }).lean();
+
   res.json(data);
 });
 
 // Full history of a stock
 app.get("/stocks/history", async (req, res) => {
   const { symbol } = req.query;
-  if (!symbol) return res.status(400).json({ error: "symbol required" });
 
-  const data = await Stock.find({ symbol }).sort({ tradeDate: 1 }).lean();
+  if (!symbol)
+    return res.status(400).json({ error: "symbol query required" });
+
+  const data = await Stock.find({ symbol })
+    .sort({ tradeDate: 1 })
+    .lean();
 
   res.json(data);
 });
@@ -134,27 +165,33 @@ app.get("/stocks/history", async (req, res) => {
 /* =========================
    Start Server
 ========================= */
+
 (async () => {
   try {
     await connectDB();
 
-    //  Backfill ONLY if DB is empty
-    const count = await Stock.estimatedDocumentCount();
-    if (count === 0) {
-      await backfillData();
-    } else {
-      console.log(" Data already exists, skipping backfill");
-    }
-    try {
-      console.log("Updating todays data if !exist");
-      await fetchAndStoreForDate(new Date());
-    } catch (err) {
-      console.log("data already exist");
-    }
+    // Sync missing NSE data
+    await updateMissingDays();
+
+    /* =========================
+       Daily Auto Update
+    ========================= */
+
+    cron.schedule("0 20 * * *", async () => {
+      console.log("Running daily NSE sync...");
+
+      try {
+        await updateMissingDays();
+      } catch (err) {
+        console.log("Daily sync failed:", err.message);
+      }
+    });
+
     app.listen(PORT, () =>
-      console.log(` Server running at http://localhost:${PORT}`),
+      console.log(`Server running at http://localhost:${PORT}`)
     );
+
   } catch (err) {
-    console.error(" Server failed to start:", err.message);
+    console.error("Server failed to start:", err.message);
   }
 })();
