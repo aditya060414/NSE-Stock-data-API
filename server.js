@@ -92,7 +92,7 @@ async function backfillData() {
   let loadedDays = 0;
   let i = 1;
 
-  while (loadedDays < 520) {
+  while (loadedDays < 365) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     i++;
