@@ -11,7 +11,7 @@ const Stock = require("./models/Stock");
 const app = express();
 app.use(cors());
 
-const MONGO_API = process.env.MONGODB_API;
+const MONGO_API = process.env.MONGO_URI;
 const PORT = 3001;
 
 /* =========================
