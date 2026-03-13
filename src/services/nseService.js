@@ -21,9 +21,13 @@ export async function fetchAndStoreForDate(date) {
   const url = `https://archives.nseindia.com/products/content/sec_bhavdata_full_${dd}${mm}${yyyy}.csv`;
 
   const res = await axios.get(url, {
-    headers: { "User-Agent": "Mozilla/5.0" },
-    timeout: 10000,
-  });
+  headers: {
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "text/csv",
+    "Referer": "https://www.nseindia.com/"
+  },
+  timeout: 15000,
+});
 
   const json = await csv().fromString(res.data);
 
