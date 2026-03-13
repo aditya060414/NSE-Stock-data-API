@@ -194,7 +194,7 @@ let page = 1;
 const perPage = 25;
 
 async function loadStocks() {
-  const res = await fetch("/stocks");
+  const res = await fetch("/api/stocks");
   allStocks = await res.json();
   viewStocks = allStocks;
   render();
