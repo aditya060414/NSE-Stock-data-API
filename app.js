@@ -20,6 +20,6 @@ app.use(
 );
 app.use(express.json());
 
-app.use("/", stockRoutes);
+app.use("/api", stockRoutes);
 
 export default app;

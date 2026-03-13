@@ -5,7 +5,7 @@ import connectDB from "./src/config/db.js"
 import { updateMissingDays } from "./src/services/nseService.js";
 import startNSESyncJob from "./src/jobs/nseSyncJob.js";
 
-const PORT = 3001;
+const PORT  = process.env.PORT || 3001;;
 
 async function startServer() {
   await connectDB();

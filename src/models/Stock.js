@@ -17,6 +17,6 @@ const stockSchema = new mongoose.Schema({
 // Prevent duplicate entries per day
 stockSchema.index({ symbol: 1, tradeDate: 1 }, { unique: true });
 
-const stock = mongoose.model("Stock", stockSchema);
+const Stock = mongoose.model("Stock", stockSchema);
 
-export default stock;
+export default Stock;
