@@ -7,7 +7,6 @@ const stockSchema = new mongoose.Schema({
   low: Number,
   close: Number,
 
-  // 🔴 IMPORTANT FIX
   tradeDate: {
     type: String, // FORCE STRING
     index: true,

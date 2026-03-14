@@ -3,9 +3,7 @@ import csv from "csvtojson";
 import Stock from "../models/Stock.js";
 import { isoDate, nseParts } from "../utils/dateUtils.js";
 
-/* =========================
-   Fetch NSE Bhavcopy
-========================= */
+/* Fetch NSE Bhavcopy*/
 
 export async function fetchAndStoreForDate(date) {
   const tradeDate = isoDate(date);
@@ -26,7 +24,7 @@ export async function fetchAndStoreForDate(date) {
     "Accept": "text/csv",
     "Referer": "https://www.nseindia.com/"
   },
-  timeout: 15000,
+  timeout: 10000,
 });
 
   const json = await csv().fromString(res.data);
@@ -57,18 +55,14 @@ export async function fetchAndStoreForDate(date) {
   console.log(`Stored ${stocks.length} stocks for ${tradeDate}`);
 }
 
-/* =========================
-   Find Latest Stored Date
-========================= */
+/* Find Latest Stored Date */
 
 export async function getLatestTradeDate() {
   const latest = await Stock.findOne().sort({ tradeDate: -1 }).lean();
   return latest ? new Date(latest.tradeDate) : null;
 }
 
-/* =========================
-   Sync Missing Bhavcopies
-========================= */
+/* Sync Missing Bhavcopies*/
 
 export async function updateMissingDays() {
   console.log("Checking missing trading days...");

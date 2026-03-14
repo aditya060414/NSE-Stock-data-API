@@ -1,6 +1,4 @@
-/* =========================
-   Helper Functions
-========================= */
+/* Helper Functions */
 
 export function isoDate(d) {
   return d.toISOString().slice(0, 10);
