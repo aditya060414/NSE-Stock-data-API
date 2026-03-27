@@ -1,4 +1,9 @@
-# 📈 Indian Stock Market API (NSE)
+# Live Links
+To get data in Json format :- https://nse-stock-data-api.onrender.com/api/stocks
+Search stock :- https://nse-stock-data-api.onrender.com/
+Line chart :- https://nse-stock-data-api.onrender.com/chart.html
+
+#  Indian Stock Market API (NSE)
 
 A full-stack stock market application that fetches **NSE historical stock data**, stores it in **MongoDB**, and visualizes it using **TradingView Lightweight Charts** (Line & Candlestick charts).
 
@@ -6,19 +11,19 @@ This project is built for **learning, practice, and portfolio purposes**.
 
 ---
 
-## 🚀 Features
+##  Features
 
-- 📊 Line Chart (Close Price)
-- 🕯️ Candlestick Chart (OHLC)
-- ⏳ Historical Data (6–12 months)
-- 🔘 Time Range Buttons (1M / 6M / 1Y / ALL)
-- 🗃️ MongoDB-based time-series storage
-- 🔄 Automatic NSE data backfilling
-- ⚡ Fast frontend filtering (no repeated API calls)
+-  Line Chart (Close Price)
+-  Candlestick Chart (OHLC)
+-  Historical Data (6–12 months)
+-  Time Range Buttons (1M / 6M / 1Y / ALL)
+-  MongoDB-based time-series storage
+-  Automatic NSE data backfilling
+-  Fast frontend filtering (no repeated API calls)
 
 ---
 
-## 🏗️ Tech Stack
+##  Tech Stack
 
 ### Backend
 - Node.js
@@ -34,7 +39,7 @@ This project is built for **learning, practice, and portfolio purposes**.
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 
 project-root/
@@ -54,39 +59,39 @@ project-root/
 
 ## ⚙️ Setup Instructions
 
-### 1️⃣ Clone Repository
+### 1️ Clone Repository
 ```bash
 git clone https://github.com/aditya060414/NSE-Stock-data-API.git
 cd your-project
 
-2️⃣ Install Backend Dependencies
+2️ Install Backend Dependencies
 npm install
 
-3️⃣ Start MongoDB
+3️ Start MongoDB
 
 Make sure MongoDB is running locally:
 mongod
 Database used:
 nse_stocks
 
-4️⃣ Start Backend Server
+4️ Start Backend Server
 node server.js
 
 Server runs on:
 http://localhost:3001
 
-5️⃣ Open Frontend
+5️ Open Frontend
 
 Use Live Server or open directly in browser:
 stock/chart.html
 stock/candlestick.html
 
-🔌 API Endpoints
-🔹 Get Latest Stocks
+ . API Endpoints
+ . Get Latest Stocks
 GET /stocks
 Returns latest trading day data for all stocks.
 
-🔹 Get Historical Data for a Stock
+ Get Historical Data for a Stock
 GET /stocks/history?symbol=RELIANCE
 
 
@@ -103,7 +108,7 @@ Response example:
   }
 ]
 
-📊 Charts Data Format
+ Charts Data Format
 Line Chart
 {
   time: { year: 2026, month: 2, day: 19 },
@@ -119,7 +124,7 @@ Candlestick Chart
   close: 1409.5
 }
 
-⏳ Time Range Buttons Logic
+ Time Range Buttons Logic
 Button	Data Range
 1M	Last 30 trading days
 6M	Last 180 trading days
@@ -128,7 +133,7 @@ ALL	Full available history
 
 Filtering is done client-side for speed.
 
-🧠 Key Learnings
+ Key Learnings
 
 Time-series data handling
 
@@ -142,24 +147,24 @@ Financial date logic
 
 Range-based data filtering
 
-⚠️ Disclaimer
+ Disclaimer
 
 This project is for educational purposes only.
 Stock market data should not be used for real trading decisions.
 
-🔮 Future Enhancements
+ Future Enhancements
 
-📊 Volume bars
+ Volume bars
 
-📉 Technical indicators (EMA, SMA, RSI)
+ Technical indicators (EMA, SMA, RSI)
 
-⚡ Intraday data
+ Intraday data
 
-⚛️ React-based frontend
+ React-based frontend
 
-🌐 Deployment (Vercel + MongoDB Atlas)
+ Deployment (Vercel + MongoDB Atlas)
 
-👨‍💻 Author
+ Author
 
 Built by Aditya Singh
 Learning Full-Stack Development & Financial Data Systems
