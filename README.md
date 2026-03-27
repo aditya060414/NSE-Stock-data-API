@@ -1,7 +1,7 @@
 # Live Links
-To get data in Json format :- https://nse-stock-data-api.onrender.com/api/stocks
-Search stock :- https://nse-stock-data-api.onrender.com/
-Line chart :- https://nse-stock-data-api.onrender.com/chart.html
+To get data in Json format :- https://nse-stock-data-api.onrender.com/api/stocks <br>
+Search stock :- https://nse-stock-data-api.onrender.com/ <br>
+Line chart :- https://nse-stock-data-api.onrender.com/chart.html <br>
 
 #  Indian Stock Market API (NSE)
 
