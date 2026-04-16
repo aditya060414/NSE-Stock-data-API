@@ -58,7 +58,7 @@ project-root/
 
 ---
 
-## ⚙️ Setup Instructions
+##  Setup Instructions
 
 ### 1️ Clone Repository
 ```bash
@@ -163,7 +163,7 @@ Stock market data should not be used for real trading decisions.
 
  React-based frontend
 
- Deployment (Vercel + MongoDB Atlas)
+ Deployment (Render + MongoDB Atlas)
 
  Author
 
