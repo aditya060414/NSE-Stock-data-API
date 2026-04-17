@@ -24,8 +24,8 @@ app.use(express.static(path.join(__dirname, "public")));
 // enables cross origin resource sharing
 app.use(
   cors({
-    origin: "https://nse-stock-data-api.onrender.com/",  //allows rosource sharing only from this site
-    methods:["GET","POST"],
+    origin: "*",  //allows rosource sharing from all the sites
+    methods:["GET"],
   }),
 );
 // enables express to parse JSON data
